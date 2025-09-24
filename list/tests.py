@@ -1,6 +1,7 @@
 from rest_framework.test import APITestCase, APIClient
 from django.contrib.auth.models import User
-from .models import Task
+from .models import Task, SubTask
+from .serializers import TaskSerializer
 from django.urls import reverse
 from rest_framework import status
 import shutil
@@ -10,6 +11,7 @@ from datetime import timezone, timedelta
 from io import BytesIO
 from PIL import Image
 from django.core.files.uploadedfile import SimpleUploadedFile
+import json
 
 def create_test_jpg(filename='test.jpg', size=(100, 100), color=(255, 0, 0)):
     buf = BytesIO()
@@ -39,26 +41,69 @@ class TaskViewSetTests(APITestCase):
         # Аутентифицируем клиент
         self.client.login(username='test_user1', password='pass123')
         # Создаём тестовый объект Task
+
         self.task = Task.objects.create(
             name='testTask',
             description='TestDescription 123',
             time_end='2025-09-16T23:35:00+03:00',
             status='Не начато',
             creator_username=self.auth_user,
-            image=create_test_jpg('ToDo/media/tasks/photo_2023-09-28_23-40-24.jpg')
+            image=create_test_jpg('ToDo/media/tasks/photo_2023-09-28_23-40-24.jpg'),
         )
+
+        self.subtask = SubTask.objects.create(
+            name='testSubtask',
+            description='testSubtask description',
+            completed=False,
+            task=self.task
+        )
+
         self.list_url = reverse('task-list')
         self.detail_url = reverse('task-detail',kwargs={'pk':self.task.pk})
 
+    def test_task_serializer_deserialization(self):
+            # Проверка создания новой задачи с подзадачами
+        data = {
+            "name": "32",
+            "description": "4",
+            'image': create_test_jpg('ToDo/media/tasks/photo_2023-09-28_23-40-24.jpg'),
+            "status": "В процессе",
+            "subtask": [
+                {
+                    "name":"test",
+                    "completed":"False"
+                }
+            ]
+        }
+
+
+        response = self.client.post(self.list_url,data,format='multipart')
+        print(response.data)
+
+"""""
     def test_create_task(self):
         data =  {
             'name': 'testTask1',
             'description': 'TestDescription 1234',
             'time_end': '2025-09-17T23:35:00+03:00',
             'status': 'В процессе',
-            'image': create_test_jpg('ToDo/media/tasks/photo_2023-09-28_23-40-24.jpg')
+            'image': create_test_jpg('ToDo/media/tasks/photo_2023-09-28_23-40-24.jpg'),
+            'subtask': [
+                {
+                    'name': 'NewSubtask1',
+                    'description': 'New Subtask Description 1',
+                    'completed': False
+                },
+                {
+                    'name': 'NewSubtask2',
+                    'description': 'New Subtask Description 2',
+                    'completed': True
+                }
+            ]
         }
+
         response = self.client.post(self.list_url, data, format='multipart')
+        print(response.data)
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
         self.assertEqual(Task.objects.count(),2)
         self.assertEqual(response.data['name'], 'testTask1')
@@ -154,4 +199,4 @@ class TaskViewSetTests(APITestCase):
         }
         response = self.client.post(self.list_url, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
+"""

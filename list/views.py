@@ -2,6 +2,8 @@ from pydoc import describe
 
 from rest_framework import permissions
 from rest_framework import viewsets
+from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
+
 from .models import Task
 from .permissions import IsOwnerOrReadOnly
 from .serializers import TaskSerializer,UserSerializer
@@ -13,6 +15,7 @@ from rest_framework.response import Response
 # Create your views here.
 
 class TaskViewSet(viewsets.ModelViewSet):
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,IsOwnerOrReadOnly]
