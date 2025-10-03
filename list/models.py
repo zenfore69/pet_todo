@@ -6,14 +6,26 @@ status_choices = (
     ('Завершенно', 'Завершено'),
 )
 
+class SubTask(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=1000,blank=True,null=True)
+    completed = models.BooleanField(default=False)
+
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
 class Task(models.Model):
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=1000,blank=True,null=True)
     time_start = models.DateTimeField(auto_now_add=True)
     time_end = models.DateTimeField(null=True,blank=True)
     status = models.CharField(max_length=30,choices=status_choices)
-    image = models.ImageField(upload_to='tasks/',null=True)
     creator_username = models.ForeignKey('auth.User',related_name="tasks",on_delete=models.CASCADE)
+    subtasks = models.ManyToManyField(SubTask)
 
     def __str__(self):
         return self.name
@@ -21,14 +33,8 @@ class Task(models.Model):
     class Meta:
         ordering = ["time_start"]
 
-class SubTask(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.CharField(max_length=1000,blank=True,null=True)
-    completed = models.BooleanField(default=False)
-    task = models.ForeignKey(Task,related_name="subtask", on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.name
+class TaskImage(models.Model):
+    image = models.ImageField(upload_to='tasks/', null=True,blank=True)
+    task = models.ForeignKey(Task,on_delete=models.CASCADE)
 
-    class Meta:
-        ordering = ["id"]
